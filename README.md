@@ -10,12 +10,12 @@ Put this directory into your search path
 
 - Bash: Edit your ~/.bash\_profile:
 
-	PATH = $PATH:~/pypitools
-	export PATH
+    PATH = $PATH:~/pypitools
+    export PATH
 
 - Fish: Edit your ~/.config/fish/config.fish:
 
-	set -x PATH ~/pypitools $PATH
+    set -x PATH ~/pypitools $PATH
 
 Run `pypipkglist update` once
 
