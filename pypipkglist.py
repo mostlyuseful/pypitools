@@ -137,11 +137,12 @@ def on_list(args):
         max_len_name = session.query(func.max(func.length(Package.name))).first()[0]
         fmt = u'{name:{max_len_name}}\t{version:10}\t{desc}'
     
-    for pkg in Package.query.all():
+    for pkg in Package.query:
         print_(fmt.format(name=pkg.name,
                           version=pkg.version,
                           desc=pkg.description,
                           max_len_name=max_len_name))
+
     
 def on_search(args):
     # TODO: Decode via actual tty encoding
