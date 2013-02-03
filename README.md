@@ -16,6 +16,7 @@ Put this directory into your search path
 - Fish: Edit your ~/.config/fish/config.fish:
 
     set -x PATH ~/pypitools $PATH
+    . ~/pypitools/autocomplete.fish
 
 Run `pypipkglist update` once
 
