@@ -5,11 +5,15 @@ import os
 import re
 import sys
 import argparse
-import urlparse
+import six
+from six import u, print_
+if six.PY2:
+    import urlparse
+else:
+    import urllib.parse as urlparse
 import requests
 from elixir import *
 from time import time
-from six import u, print_
 from sqlalchemy import func, collate
 
 # Ugly hack to be able to redirect output to files
@@ -32,7 +36,7 @@ class Package(Entity):
     using_options(shortnames=True, order_by='name')
     
     def __str__(self):
-        return u"<Package {0}>".format(self.name)
+        return u("<Package {0}>".format(self.name))
     __repr__=__str__
 
 class Metadata(Entity):
@@ -69,7 +73,7 @@ def on_update(args):
                 self.buffer = []
             elif "</tr>" in line:
                 # Table row finished, update package information in DB
-                s = u'\n'.join(self.buffer)
+                s = u('\n').join(self.buffer)
                 # Parse out package information
                 m = re.search('<td><a href="(.*?)">(.*?)&nbsp;(.*?)</a></td>.*?<td>(.*?)</td>', s, re.S)
                 # Something went wrong, match not found. Abort.
@@ -121,21 +125,21 @@ def on_update(args):
             print_('.', end='')
             sys.stdout.flush()
     # Not needed right now, but nice to have
-    set_metadata(u'last_repo_url', u(repo_url))
-    set_metadata(u'last_update_timestamp', u(str(time())))
+    set_metadata(u('last_repo_url'), u(repo_url))
+    set_metadata(u('last_update_timestamp'), u(str(time())))
     session.commit()
     print_()
-    print_(u'There are {0} packages in the DB.'.format(Package.query.count()))
+    print_(u('There are {0} packages in the DB.').format(Package.query.count()))
 
 def on_list(args):
     if args.simple:
         # List only package names
-        fmt = u'{name}'
+        fmt = u('{name}')
         max_len_name = None
     else:
         # List package names, its current version and description
         max_len_name = session.query(func.max(func.length(Package.name))).first()[0]
-        fmt = u'{name:{max_len_name}}\t{version:10}\t{desc}'
+        fmt = u('{name:{max_len_name}}\t{version:10}\t{desc}')
     
     for pkg in Package.query:
         print_(fmt.format(name=pkg.name,
@@ -152,10 +156,10 @@ def on_search(args):
     for pkg in Package.query.filter(collate(Package.name,"NOCASE")==q).all():
         pkg_names.add(pkg.name)
     # Check for substring name matches
-    for pkg in Package.query.filter(Package.name.like(u'%{0}%'.format(q))).all():
+    for pkg in Package.query.filter(Package.name.like(u('%{0}%').format(q))).all():
         pkg_names.add(pkg.name)
     # Check for description matches
-    for pkg in Package.query.filter(Package.description.like(u'%{0}%'.format(q))).all():
+    for pkg in Package.query.filter(Package.description.like(u('%{0}%').format(q))).all():
         pkg_names.add(pkg.name)
     
     # Nice column formatting
@@ -163,14 +167,14 @@ def on_search(args):
         
     for pkg_name in sorted(pkg_names):
         pkg = Package.get(pkg_name)
-        print_(u'{name:{max_len_name}} {version:10} {desc}'.format(name=pkg.name, version=pkg.version, desc=pkg.description, max_len_name=max_len_name))
+        print_(u('{name:{max_len_name}} {version:10} {desc}'.format(name=pkg.name, version=pkg.version, desc=pkg.description, max_len_name=max_len_name)))
     
     
 def on_show(args):
     for pkg_name in args.package_names:
         pkg = Package.query.get(pkg_name.decode("utf-8"))
         if pkg:
-            print_(u'{name}\t{version}\t{desc}'.format(name=pkg.name, version=pkg.version, desc=pkg.description))
+            print_(u('{name}\t{version}\t{desc}'.format(name=pkg.name, version=pkg.version, desc=pkg.description)))
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description="Query a local copy of the PyPI package list")

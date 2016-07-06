@@ -1,11 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
 from pkgtools.pypi import PyPIJson
 import pip
 import progressbar
-from Queue import Queue
+import traceback
 from threading import Thread
+
+try:
+    # Python 2
+    from Queue import Queue
+except ImportError:
+    # Python 3
+    from queue import Queue
 
 def worker():
     while True:
@@ -16,8 +24,8 @@ def worker():
             if remote_version != pkg.version:
                 outdated.append((pkg,remote_version))
         except Exception as e:
-            print "Error occurred:"
-            print e
+            print("""Error occurred while checking package "{0}":""".format(pkg))
+            print(traceback.format_exc())
         done.append(pkg)
         progress.update(len(done))
         q.task_done()
@@ -37,7 +45,8 @@ if __name__=='__main__':
         t.daemon = True
         t.start()
 
-    pkg_list = pip.get_installed_distributions()
+    only_local_packages = False
+    pkg_list = pip.get_installed_distributions(local_only=only_local_packages)
     progress = progressbar.ProgressBar(widgets=[progressbar.SimpleProgress(), ' ', progressbar.Bar(), ' ', progressbar.ETA()], maxval=len(pkg_list)).start()
     for pkg in pkg_list:
         q.put(pkg)
@@ -45,7 +54,8 @@ if __name__=='__main__':
     progress.finish()
 
     if outdated:
-        print "Run the following command to update all outdated packages:"
-        print "pip install -U " + " ".join(["%s==%s"%(pkg.project_name,version) for (pkg,version) in outdated])
+        print("Run the following command to update all outdated packages:")
+        #print("pip install -U " + " ".join(["%s==%s"%(pkg.project_name,version) for (pkg,version) in outdated]))
+        print("pip install -U " + " ".join(sorted(pkg.project_name for (pkg,version) in outdated)))
     else:
-        print "Everything is up to date."
+        print("Everything is up to date.")
